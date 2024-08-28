@@ -21,6 +21,9 @@ from util.cookies import (
     excluir_cookie_auth,
 )
 from util.templates import obter_jinja_templates
+from dotenv import load_dotenv
+
+load_dotenv()
 
 router = APIRouter(prefix="/cliente")
 templates = obter_jinja_templates("templates/cliente")
@@ -183,6 +186,8 @@ async def get_pagamento(request: Request, id_pedido: int = Path(...)):
     PedidoRepo.atualizar_para_fechar(pedido.id, pedido.endereco_entrega, total_pedido)
     # access_token = os.getenv("ACCESS_TOKEN_MP_PROD")
     access_token = os.getenv("ACCESS_TOKEN_MP_TEST")
+    print(access_token)
+    print(type(access_token))
     print(f"\n\n\nTOKEN: {access_token}\n\n\n")
     sdk = mp.SDK(access_token=access_token)
     url_de_retorno_do_mp = os.getenv("URL_TEST")
