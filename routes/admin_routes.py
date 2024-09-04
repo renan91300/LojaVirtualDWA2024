@@ -1,6 +1,9 @@
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 from dtos.inserir_produto_dto import InserirProdutoDTO
+from dtos.excluir_produto_dto import ExcluirProdutoDTO
+from dtos.problem_details_dto import ProblemDetailsDTO
 from repositories.produto_repo import ProdutoRepo
 from models.produto_model import Produto
 
@@ -12,16 +15,17 @@ async def obter_produtos() -> list[Produto]:
     return produtos
 
 @router.post("/inserir_produto")
-async def inserir_produto(produto: InserirProdutoDTO) -> Produto:
-    novo_produto = Produto(None, produto.nome, produto.preco, produto.descricao, produto.estoque)
+async def inserir_produto(inputDto: InserirProdutoDTO) -> Produto:
+    novo_produto = Produto(None, inputDto.nome, inputDto.preco, inputDto.descricao, inputDto.estoque)
     novo_produto = ProdutoRepo.inserir(novo_produto)
 
     return novo_produto
 
 @router.post("/excluir_produto")
-async def excluir_produto(id_produto: int):
-    if ProdutoRepo.excluir(id_produto):
-        return {"mensagem": "Produto excluído com sucesso!"}
+async def excluir_produto(inputDto: ExcluirProdutoDTO):
+    if ProdutoRepo.excluir(inputDto.id):
+        return
     
-    return {"mensagem": "Produto não encontrado!"}  
+    pb = ProblemDetailsDTO(input="int", msg=f"O produto com id {inputDto.id} não foi encontrado", type="value_not_found", loc=["body", "id"])
     
+    return JSONResponse(pb.to_dict(), status_code=404)
