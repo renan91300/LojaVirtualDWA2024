@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Path, Query, Request, Response
+from fastapi import APIRouter, Path, status
 from fastapi.responses import JSONResponse
 
 from dtos.alterar_pedido_dto import AlterarPedidoDTO
+from dtos.entrar_dto import EntrarDTO
 from dtos.inserir_produto_dto import InserirProdutoDTO
 from dtos.id_produto_dto import IdProdutoDTO
 from dtos.alterar_produto_dto import AlterarProdutoDTO
@@ -10,6 +11,9 @@ from models.pedido_model import EstadoPedido, Pedido
 from repositories.pedido_repo import PedidoRepo
 from repositories.produto_repo import ProdutoRepo
 from models.produto_model import Produto
+from repositories.usuario_repo import UsuarioRepo
+from util.auth_jwt import conferir_senha, criar_token
+from util.pydantic import create_validation_errors
 
 router = APIRouter(prefix="/manager")
 
@@ -76,3 +80,17 @@ async def alterar_pedido(inputDto: AlterarPedidoDTO):
     pd = ProblemDetailsDTO(input="int", msg=f"O pedido com id {inputDto.id} não foi encontrado", type="value_not_found", loc=["body", "id"])
 
     return JSONResponse(pd.to_dict(), status_code=404)
+
+@router.post("/entrar")
+async def entrar(entrarDto: EntrarDTO):
+    cliente_entrou = UsuarioRepo.obter_por_email(entrarDto.email)
+    if (
+        (not cliente_entrou)
+        or (not cliente_entrou.senha)
+        or (not conferir_senha(entrarDto.senha, cliente_entrou.senha))
+    ):
+        pd = ProblemDetailsDTO(input="str", msg=f"Credenciais inválidas. Certifique-se de que está cadastrado e de que sua senha está correta.", type="value_not_found", loc=["body", "email", "senha"])
+        return JSONResponse(pd.to_dict(), status_code=status.HTTP_404_NOT_FOUND)
+    
+    token = criar_token(cliente_entrou.id, cliente_entrou.nome, cliente_entrou.email, cliente_entrou.perfil)
+    return JSONResponse({"token": token}, status_code=status.HTTP_200_OK)
