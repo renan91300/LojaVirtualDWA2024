@@ -6,8 +6,6 @@ from models.usuario_model import Usuario
 from repositories.usuario_repo import UsuarioRepo
 from util.cookies import NOME_COOKIE_AUTH, adicionar_cookie_auth
 
-NOME_COOKIE_AUTH = "jwt-token"
-
 async def obter_usuario_logado(request: Request) -> Optional[Usuario]:
     try:
         token = request.cookies[NOME_COOKIE_AUTH]

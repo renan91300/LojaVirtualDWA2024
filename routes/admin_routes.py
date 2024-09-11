@@ -15,7 +15,7 @@ from repositories.usuario_repo import UsuarioRepo
 from util.auth_jwt import conferir_senha, criar_token
 from util.pydantic import create_validation_errors
 
-router = APIRouter(prefix="/manager")
+router = APIRouter(prefix="/admin")
 
 @router.get("/obter_produtos")
 async def obter_produtos() -> list[Produto]:
@@ -80,17 +80,3 @@ async def alterar_pedido(inputDto: AlterarPedidoDTO):
     pd = ProblemDetailsDTO(input="int", msg=f"O pedido com id {inputDto.id} não foi encontrado", type="value_not_found", loc=["body", "id"])
 
     return JSONResponse(pd.to_dict(), status_code=404)
-
-@router.post("/entrar")
-async def entrar(entrarDto: EntrarDTO):
-    cliente_entrou = UsuarioRepo.obter_por_email(entrarDto.email)
-    if (
-        (not cliente_entrou)
-        or (not cliente_entrou.senha)
-        or (not conferir_senha(entrarDto.senha, cliente_entrou.senha))
-    ):
-        pd = ProblemDetailsDTO(input="str", msg=f"Credenciais inválidas. Certifique-se de que está cadastrado e de que sua senha está correta.", type="value_not_found", loc=["body", "email", "senha"])
-        return JSONResponse(pd.to_dict(), status_code=status.HTTP_404_NOT_FOUND)
-    
-    token = criar_token(cliente_entrou.id, cliente_entrou.nome, cliente_entrou.email, cliente_entrou.perfil)
-    return JSONResponse({"token": token}, status_code=status.HTTP_200_OK)
