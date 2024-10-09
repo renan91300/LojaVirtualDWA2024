@@ -79,7 +79,7 @@ async def obter_pedidos_por_estado(estado: EstadoPedido = Path(..., title="Estad
 
 @router.post("/alterar_pedido", status_code=204)
 async def alterar_pedido(inputDto: AlterarPedidoDTO):
-    if PedidoRepo.alterar_estado(inputDto.id, inputDto.estado):
+    if PedidoRepo.alterar_estado(inputDto.id, inputDto.estado.value):
         return None
     
     pd = ProblemDetailsDTO(input="int", msg=f"O pedido com id {inputDto.id} não foi encontrado", type="value_not_found", loc=["body", "id"])
@@ -88,7 +88,7 @@ async def alterar_pedido(inputDto: AlterarPedidoDTO):
 
 @router.post("/cancelar_pedido/{id_pedido}", status_code=204)
 async def cancelar_pedido(id_pedido: int = Path(..., title="Id do Pedido", ge=1)):
-    if PedidoRepo.alterar_estado(id_pedido, EstadoPedido.CANCELADO):
+    if PedidoRepo.alterar_estado(id_pedido, EstadoPedido.CANCELADO.value):
         return None
     
     pd = ProblemDetailsDTO(input="int", msg=f"O pedido com id {id_pedido} não foi encontrado", type="value_not_found", loc=["body", "id"])
