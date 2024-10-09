@@ -51,7 +51,7 @@ async def checar_autenticacao(request: Request, call_next):
 async def checar_autorizacao(request: Request):
     usuario = request.state.usuario if hasattr(request.state, "usuario") else None
     area_do_cliente = request.url.path.startswith("/cliente")
-    area_do_admin = request.url.path.startswith("/admin")
+    area_do_admin = request.url.path.startswith("/admin2")
     if (area_do_cliente or area_do_admin) and not usuario:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     if area_do_cliente and usuario.perfil != 1:
