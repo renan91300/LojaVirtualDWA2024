@@ -132,6 +132,8 @@ class PedidoRepo:
             with obter_conexao() as conexao:
                 cursor = conexao.cursor()
                 tupla = cursor.execute(SQL_OBTER_POR_ID, (id,)).fetchone()
+                if not tupla:
+                    return None
                 pedido = Pedido(*tupla)
                 return pedido
         except sqlite3.Error as ex:

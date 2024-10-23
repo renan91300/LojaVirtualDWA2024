@@ -9,6 +9,7 @@ from dtos.id_produto_dto import IdProdutoDTO
 from dtos.alterar_produto_dto import AlterarProdutoDTO
 from dtos.problem_details_dto import ProblemDetailsDTO
 from models.pedido_model import EstadoPedido, Pedido
+from repositories.item_pedido_repo import ItemPedidoRepo
 from repositories.pedido_repo import PedidoRepo
 from repositories.produto_repo import ProdutoRepo
 from models.produto_model import Produto
@@ -42,11 +43,11 @@ async def inserir_produto(inputDto: InserirProdutoDTO) -> Produto:
 
     return novo_produto
 
-@router.post("/excluir_produto", status_code=204)
-async def excluir_produto(inputDto: IdProdutoDTO):
-    if ProdutoRepo.excluir(inputDto.id):
+@router.post("/excluir_produto/{id_produto}", status_code=204)
+async def excluir_produto(id_produto: int = Path(..., title="Id do Produto", ge=1)):    
+    if ProdutoRepo.excluir(id_produto):
         return None
-    pd = ProblemDetailsDTO(input="int", msg=f"O produto com id {inputDto.id} não foi encontrado", type="value_not_found", loc=["body", "id"])
+    pd = ProblemDetailsDTO(input="int", msg=f"O produto com id {id_produto} não foi encontrado", type="value_not_found", loc=["body", "id"])
     
     return JSONResponse(pd.to_dict(), status_code=404)        
 
@@ -64,6 +65,20 @@ async def alterar_produto(inputDto: AlterarProdutoDTO):
 async def obter_pedido_por_id(id_pedido: int = Path(..., title="Id do Pedido", ge=1)) -> Pedido:
     pedido = PedidoRepo.obter_por_id(id_pedido)
     if pedido:
+        return pedido
+    
+    pd = ProblemDetailsDTO(input="int", msg=f"O pedido com id {id_pedido} não foi encontrado", type="value_not_found", loc=["path", "id"])
+    
+    return JSONResponse(pd.to_dict(), status_code=404)
+
+@router.get("/obter_pedido/{id_pedido}")
+async def obter_pedido_por_id(id_pedido: int = Path(..., title="Id do Pedido", ge=1)) -> Pedido:
+    pedido = PedidoRepo.obter_por_id(id_pedido)    
+    if pedido:
+        itens = ItemPedidoRepo.obter_por_pedido(pedido.id)
+        cliente = UsuarioRepo.obter_por_id(pedido.id_cliente)
+        pedido.itens = itens
+        pedido.cliente = cliente
         return pedido
     
     pd = ProblemDetailsDTO(input="int", msg=f"O pedido com id {id_pedido} não foi encontrado", type="value_not_found", loc=["path", "id"])
