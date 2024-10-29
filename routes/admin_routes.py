@@ -9,6 +9,7 @@ from dtos.id_produto_dto import IdProdutoDTO
 from dtos.alterar_produto_dto import AlterarProdutoDTO
 from dtos.problem_details_dto import ProblemDetailsDTO
 from models.pedido_model import EstadoPedido, Pedido
+from models.usuario_model import Usuario
 from repositories.item_pedido_repo import ItemPedidoRepo
 from repositories.pedido_repo import PedidoRepo
 from repositories.produto_repo import ProdutoRepo
@@ -132,5 +133,22 @@ async def evoluir_pedido(id_pedido: int = Path(..., title="Id do Pedido", ge=1))
             return None
 
     pd = ProblemDetailsDTO(input="int", msg=f"O pedido com id {id_pedido} não pode ter seu estado evoluido para <b>cancelado</b>", type="status_change_invalid", loc=["body", "id"])
+
+    return JSONResponse(pd.to_dict(), status_code=404)
+
+
+@router.get("/obter_usuarios")
+async def obter_usuarios() -> list[Usuario]:
+    # Delay de 2 segundos
+    await asyncio.sleep(2)
+    usuarios = UsuarioRepo.obter_todos()
+    return usuarios
+
+@router.get("/excluir_usuario/{id_usuario}", status_code=204)
+async def excluir_usuario(id_usuario: int = Path(..., title="Id do Usuário", ge=1)):
+    if UsuarioRepo.excluir(id_usuario):
+        return None
+    
+    pd = ProblemDetailsDTO(input="int", msg=f"O usuário com id {id_usuario} não foi encontrado", type="value_not_found", loc=["body", "id"])
 
     return JSONResponse(pd.to_dict(), status_code=404)

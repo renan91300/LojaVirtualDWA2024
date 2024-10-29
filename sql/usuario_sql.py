@@ -71,6 +71,12 @@ SQL_OBTER_QUANTIDADE_POR_PERFIL = """
     WHERE perfil=?
 """
 
+SQL_OBTER_TODOS = """
+    SELECT id, nome, cpf, data_nascimento, endereco, telefone, email
+    FROM usuario
+    ORDER BY nome
+"""
+
 SQL_OBTER_BUSCA = """
     SELECT id, nome, cpf, data_nascimento, endereco, telefone, email
     FROM usuario

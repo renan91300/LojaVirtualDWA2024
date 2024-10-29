@@ -116,6 +116,20 @@ class UsuarioRepo:
                     UsuarioRepo.inserir(Usuario(**usuario))
 
     @classmethod
+    def obter_todos(cls) -> List[Usuario]:
+        try:
+            with obter_conexao() as conexao:
+                cursor = conexao.cursor()
+                tuplas = cursor.execute(
+                    SQL_OBTER_TODOS
+                ).fetchall()
+                usuarios = [Usuario(*t) for t in tuplas]
+                return usuarios
+        except sqlite3.Error as ex:
+            print(ex)
+            return None
+        
+    @classmethod
     def obter_busca(cls, termo: str, pagina: int, tamanho_pagina: int) -> List[Usuario]:
         termo = "%" + termo + "%"
         offset = (pagina - 1) * tamanho_pagina
