@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, validator
 
 from util.validators import *
 
@@ -26,7 +26,8 @@ class AlterarProdutoDTO(BaseModel):
 
     @field_validator("preco")
     def validar_preco(cls, v):
-        msg = is_in_range(v, "Preço", 0.0, 100000.0)
+        msg = is_float(v, "Preço")
+        msg = msg or is_in_range(v, "Preço", 0.0, 100000.0)
         if msg:
             raise ValueError(msg)
         return v
@@ -40,9 +41,10 @@ class AlterarProdutoDTO(BaseModel):
             raise ValueError(msg)
         return v
     
-    @field_validator("estoque")
+    @field_validator("estoque", mode="before")
     def validar_estoque(cls, v):
-        msg = is_in_range(v, "Estoque", 0, 1000)
+        msg = is_integer(v, "Estoque")
+        msg = msg or is_in_range(v, "Estoque", 0, 9999)
         if msg:
             raise ValueError(msg)
         return v

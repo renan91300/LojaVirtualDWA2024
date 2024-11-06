@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import APIRouter, Path, status
+from fastapi import APIRouter, Form, Path, status
 from fastapi.responses import JSONResponse
 
 from dtos.alterar_pedido_dto import AlterarPedidoDTO
@@ -44,8 +44,8 @@ async def inserir_produto(inputDto: InserirProdutoDTO) -> Produto:
 
     return novo_produto
 
-@router.post("/excluir_produto/{id_produto}", status_code=204)
-async def excluir_produto(id_produto: int = Path(..., title="Id do Produto", ge=1)):    
+@router.post("/excluir_produto", status_code=204)
+async def excluir_produto(id_produto: int = Form(...)):    
     if ProdutoRepo.excluir(id_produto):
         return None
     pd = ProblemDetailsDTO(input="int", msg=f"O produto com id {id_produto} não foi encontrado", type="value_not_found", loc=["body", "id"])
@@ -102,8 +102,8 @@ async def alterar_pedido(inputDto: AlterarPedidoDTO):
 
     return JSONResponse(pd.to_dict(), status_code=404)
 
-@router.post("/cancelar_pedido/{id_pedido}", status_code=204)
-async def cancelar_pedido(id_pedido: int = Path(..., title="Id do Pedido", ge=1)):
+@router.post("/cancelar_pedido/", status_code=204)
+async def cancelar_pedido(id_pedido: int = Form(...)):
     if PedidoRepo.alterar_estado(id_pedido, EstadoPedido.CANCELADO.value):
         return None
     
@@ -111,8 +111,8 @@ async def cancelar_pedido(id_pedido: int = Path(..., title="Id do Pedido", ge=1)
 
     return JSONResponse(pd.to_dict(), status_code=404)
 
-@router.post("/evoluir_pedido/{id_pedido}", status_code=204)
-async def evoluir_pedido(id_pedido: int = Path(..., title="Id do Pedido", ge=1)):
+@router.post("/evoluir_pedido", status_code=204)
+async def evoluir_pedido(id_pedido: int = Form(...)):
     pedido = PedidoRepo.obter_por_id(id_pedido)
     if not pedido:
         pd = ProblemDetailsDTO(input="int", msg=f"O pedido com id {id_pedido} não foi encontrado", type="value_not_found", loc=["body", "id"])
@@ -144,8 +144,8 @@ async def obter_usuarios() -> list[Usuario]:
     usuarios = UsuarioRepo.obter_todos()
     return usuarios
 
-@router.get("/excluir_usuario/{id_usuario}", status_code=204)
-async def excluir_usuario(id_usuario: int = Path(..., title="Id do Usuário", ge=1)):
+@router.post("/excluir_usuario/", status_code=204)
+async def excluir_usuario(id_usuario: int = Form(...)):
     if UsuarioRepo.excluir(id_usuario):
         return None
     
