@@ -29,6 +29,7 @@ def is_not_empty(field_value: str, field_label: str) -> str:
     else:
         return f"O valor do campo <b>{field_label}</b> não pode ser vazio."
 
+
 def is_integer(field_value: str, field_label: str) -> str:
     try:
         int(field_value)
@@ -43,7 +44,8 @@ def is_float(field_value: str, field_label: str) -> str:
         return ""
     except ValueError:
         return f"O valor do campo <b>{field_label}</b> deve ser um número decimal válido."
-    
+
+
 def is_size_between(
     field_value: str,
     field_label: str,

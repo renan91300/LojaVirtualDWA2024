@@ -98,8 +98,7 @@ class PedidoRepo:
         if not valor_total:
             itens = ItemPedidoRepo.obter_por_pedido(id)
             if itens:
-                valor_total = sum([item.valor_item * item.quantidade for item in itens])
-
+                valor_total = sum([item.valor_item for item in itens])
         try:
             with obter_conexao() as conexao:
                 cursor = conexao.cursor()
@@ -132,8 +131,7 @@ class PedidoRepo:
             with obter_conexao() as conexao:
                 cursor = conexao.cursor()
                 tupla = cursor.execute(SQL_OBTER_POR_ID, (id,)).fetchone()
-                if not tupla:
-                    return None
+                if not tupla: return None
                 pedido = Pedido(*tupla)
                 return pedido
         except sqlite3.Error as ex:
@@ -216,10 +214,7 @@ class PedidoRepo:
             with obter_conexao() as conexao:
                 cursor = conexao.cursor()
                 tuplas = cursor.execute(
-                    SQL_OBTER_TODOS_POR_ESTADO,
-                    (
-                        estado,
-                    ),
+                    SQL_OBTER_TODOS_POR_ESTADO, (estado,),
                 ).fetchall()
                 pedidos = [Pedido(*t) for t in tuplas]
                 return pedidos

@@ -3,7 +3,7 @@ from pydantic import BaseModel, field_validator
 from util.validators import *
 
 
-class EntrarDTO(BaseModel):
+class EntrarDto(BaseModel):
     email: str
     senha: str
     return_url: Optional[str] = None

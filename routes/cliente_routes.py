@@ -13,7 +13,7 @@ from repositories.usuario_repo import UsuarioRepo
 from repositories.item_pedido_repo import ItemPedidoRepo
 from repositories.pedido_repo import PedidoRepo
 from repositories.produto_repo import ProdutoRepo
-from util.auth_jwt import conferir_senha, obter_hash_senha
+from util.auth_cookie import conferir_senha, obter_hash_senha
 from util.cookies import (
     adicionar_mensagem_alerta,
     adicionar_mensagem_erro,
@@ -21,9 +21,6 @@ from util.cookies import (
     excluir_cookie_auth,
 )
 from util.templates import obter_jinja_templates
-from dotenv import load_dotenv
-
-load_dotenv()
 
 router = APIRouter(prefix="/cliente", include_in_schema=False)
 templates = obter_jinja_templates("templates/cliente")
@@ -33,19 +30,17 @@ templates = obter_jinja_templates("templates/cliente")
 async def get_pedidos(request: Request, periodo: str = Query("todos")):
     data_inicial = datetime(1900, 1, 1)
     data_final = datetime.now()
-
     match periodo:
         case "30":
             data_inicial = data_final - timedelta(days=30)
         case "60":
             data_inicial = data_final - timedelta(days=60)
         case "90":
-            data_inicial = data_final - timedelta(days=90)          
-
+            data_inicial = data_final - timedelta(days=90)
     pedidos = PedidoRepo.obter_por_periodo(request.state.usuario.id, data_inicial, data_final)
     return templates.TemplateResponse(
         "pages/pedidos.html",
-        {"request": request, "pedidos": pedidos, "data_inicial": data_inicial, "data_final": data_final},
+        {"request": request, "pedidos": pedidos},
     )
 
 
@@ -119,7 +114,7 @@ async def get_carrinho(request: Request):
         response = RedirectResponse("/", status.HTTP_303_SEE_OTHER)
         adicionar_mensagem_alerta(
             response,
-            "Seu carrinho está vazio. Adicione produtos para continuar.",
+            "Seu carrinho está vazio. Adicione produtos para continuar."
         )
         return response
     total_pedido = sum([item.valor_item for item in itens_pedido])
@@ -135,13 +130,13 @@ async def get_confirmacaopedido(request: Request):
         request.state.usuario.id, EstadoPedido.CARRINHO.value
     )
     pedido_carrinho = pedidos[0] if pedidos else None
-    usuario = UsuarioRepo.obter_por_id(request.state.usuario.id)
     if not pedido_carrinho:
         return RedirectResponse("/cliente/carrinho", status.HTTP_303_SEE_OTHER)
     itens_pedido = ItemPedidoRepo.obter_por_pedido(pedido_carrinho.id)
     if not itens_pedido:
         return RedirectResponse("/cliente/carrinho", status.HTTP_303_SEE_OTHER)
     valor_total = sum([item.valor_produto * item.quantidade for item in itens_pedido])
+    usuario = UsuarioRepo.obter_por_id(request.state.usuario.id)
     PedidoRepo.atualizar_para_fechar(
         pedido_carrinho.id, usuario.endereco, valor_total
     )
@@ -171,7 +166,6 @@ async def get_pagamento(request: Request, id_pedido: int = Path(...)):
         return response
     # muda o estado do pedido para PENDENTE
     PedidoRepo.alterar_estado(id_pedido, EstadoPedido.PENDENTE.value)
-
     # captura os itens do pedido
     itens = ItemPedidoRepo.obter_por_pedido(pedido.id)
     total_pedido = sum([item.valor_item for item in itens])
@@ -179,8 +173,6 @@ async def get_pagamento(request: Request, id_pedido: int = Path(...)):
     PedidoRepo.atualizar_para_fechar(pedido.id, pedido.endereco_entrega, total_pedido)
     # access_token = os.getenv("ACCESS_TOKEN_MP_PROD")
     access_token = os.getenv("ACCESS_TOKEN_MP_TEST")
-    print(access_token)
-    print(type(access_token))
     print(f"\n\n\nTOKEN: {access_token}\n\n\n")
     sdk = mp.SDK(access_token=access_token)
     url_de_retorno_do_mp = os.getenv("URL_TEST")
@@ -200,7 +192,7 @@ async def get_pagamento(request: Request, id_pedido: int = Path(...)):
         "payer": {
             "name": "Test",
             "surname": "Test",
-            "email": "test_user_1929709123@testuser.com",
+            "email": "test_user_1218031040@testuser.com",
         },
         "back_urls": {
             "success": f"{url_de_retorno_do_mp}/cliente/mp/sucesso/{pedido.id}",
@@ -268,7 +260,7 @@ async def post_adicionar_carrinho(request: Request, id_produto: int = Form(...))
             0,  # valor_total
             usuario.endereco,
             EstadoPedido.CARRINHO.value,
-            usuario.id,
+            request.state.usuario.id,
         )
         pedido_carrinho = PedidoRepo.inserir(pedido_carrinho)
     qtde = ItemPedidoRepo.obter_quantidade_por_produto(pedido_carrinho.id, id_produto)
@@ -280,9 +272,7 @@ async def post_adicionar_carrinho(request: Request, id_produto: int = Form(...))
     else:
         ItemPedidoRepo.aumentar_quantidade_produto(pedido_carrinho.id, id_produto)
         mensagem = f"O produto <b>{produto.nome}</b> já estava no carrinho e teve sua quantidade aumentada."
-    
-    PedidoRepo.atualizar_valor_total(pedido_carrinho.id)    
-
+    PedidoRepo.atualizar_valor_total(pedido_carrinho.id)
     response = RedirectResponse("/cliente/carrinho", status.HTTP_303_SEE_OTHER)
     adicionar_mensagem_sucesso(response, mensagem)
     return response
@@ -318,9 +308,7 @@ async def post_aumentar_item(request: Request, id_produto: int = Form(0)):
         response,
         f"O produto <b>{produto.nome}</b> teve sua quantidade aumentada para <b>{qtde+1}</b>.",
     )
-
     PedidoRepo.atualizar_valor_total(pedido_carrinho.id)
-    
     return response
 
 
@@ -352,22 +340,19 @@ async def post_reduzir_item(request: Request, id_produto: int = Form(0)):
         response,
         f"O produto <b>{produto.nome}</b> teve sua quantidade diminuída para <b>{qtde-1}</b>.",
     )
-
     PedidoRepo.atualizar_valor_total(pedido_carrinho.id)
-
     return response
+
 
 @router.post("/post_remover_item", response_class=RedirectResponse)
 async def post_remover_item(request: Request, id_produto: int = Form(0)):
     if not id_produto:
         return RedirectResponse("/cliente/carrinho", status.HTTP_304_NOT_MODIFIED)
-    
     produto = ProdutoRepo.obter_um(id_produto)
     if not produto:
         response = RedirectResponse("/cliente/carrinho", status.HTTP_304_NOT_MODIFIED)
         adicionar_mensagem_alerta(response, "Produto não encontrado.")
         return response
-        
     pedidos = PedidoRepo.obter_por_estado(
         request.state.usuario.id, EstadoPedido.CARRINHO.value
     )
@@ -382,16 +367,10 @@ async def post_remover_item(request: Request, id_produto: int = Form(0)):
             f"O produto {id_produto} não foi encontrado em seu carrinho."
         )
         return response
-    
     ItemPedidoRepo.excluir(pedido_carrinho.id, id_produto)
-    
-    adicionar_mensagem_sucesso(
-        response,
-        f"O produto <b>{produto.nome}</b> foi excluído com sucesso.",
-    )
-
+    response = RedirectResponse("/cliente/carrinho", status.HTTP_303_SEE_OTHER)
+    adicionar_mensagem_sucesso(response, "Item excluído com sucesso.")
     PedidoRepo.atualizar_valor_total(pedido_carrinho.id)
-
     return response
 
 
@@ -426,25 +405,20 @@ async def get_detalhespedido(
     pedido.itens = itens
     return templates.TemplateResponse(
         "pages/detalhespedido.html",
-        {"request": request, "pedido": pedido },
+        {"request": request, "pedido": pedido},
     )
 
 
-@router.post("/post_cancelar_pedido/", response_class=RedirectResponse)
-async def post_cancelar_pedido(
-    request: Request,
-    id_pedido: int = Form(0),
-):
+@router.post("/post_cancelar_pedido", response_class=RedirectResponse)
+async def post_cancelar_pedido(request: Request, id_pedido: int = Form(0)):
     pedido = PedidoRepo.obter_por_id(id_pedido)
-    if not pedido and pedido.id_cliente != request.state.usuario.id:
+    if not pedido or pedido.id_cliente != request.state.usuario.id:
         response = RedirectResponse(url="/cliente/pedidos", status_code=status.HTTP_302_FOUND)
         return adicionar_mensagem_erro(
             response,
             "Pedido não encontrado. Verifique o número do pedido e tente novamente.",
         )
     PedidoRepo.alterar_estado(id_pedido, EstadoPedido.CANCELADO.value)
-    response = RedirectResponse(url="/cliente/pedidos", status_code=status.HTTP_302_FOUND)
-    return adicionar_mensagem_sucesso(
-        response,
-        f"Pedido {id_pedido:06d} cancelado com sucesso.",
-    )
+    response = RedirectResponse(url="/cliente/pedidos", status_code=status.HTTP_303_SEE_OTHER)
+    adicionar_mensagem_sucesso(response, "Pedido cancelado com sucesso.")
+    return response

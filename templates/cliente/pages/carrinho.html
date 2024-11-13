@@ -29,17 +29,12 @@
             <td><a href="/produto/{{i.id_produto}}">{{ i.nome_produto }}</a></td>
             <td>{{ "{:,.2f}".format(i.valor_produto) }}</td>
             <td>
-                {% if i.quantidade > 1: %}
                 <form action="/cliente/post_reduzir_item" method="post" class="d-inline-block">
                     <input type="hidden" name="id_produto" value="{{i.id_produto}}">
                     <button class="btn btn-sm btn-danger">
                         <i class="bi bi-dash"></i>
                     </button>
                 </form>
-                {% else: %}
-                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmarRemocao"><i
-                        class="bi bi-dash"></i></button>
-                {% endif %}
                 <span class="mx-2">{{i.quantidade}}</span>
                 <form action="/cliente/post_aumentar_item" method="post" class="d-inline-block">
                     <input type="hidden" name="id_produto" value="{{i.id_produto}}">
@@ -50,9 +45,12 @@
             </td>
             <td>{{ "{:,.2f}".format(i.valor_item) }}</td>
             <td>
-                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmarRemocao"><i
-                        class="bi bi-trash"></i></button>
-                {% include "includes/modal_confirmar_excluir_item_carrinho.html"%}
+                <form action="/cliente/post_remover_item" method="post" class="d-inline-block">
+                    <input type="hidden" name="id_produto" value="{{i.id_produto}}">
+                    <button class="btn btn-sm btn-danger">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </form>
             </td>
         </tr>
         {% endfor %}

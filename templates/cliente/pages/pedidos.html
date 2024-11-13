@@ -3,7 +3,7 @@
 {% block conteudo %}
 <h1 class="display-5"><b>Meus Pedidos</b></h1>
 <hr>
-{% if pedidos %}
+{% if pedidos: %}
 <table class="table table-striped">
     <thead>
         <tr>
@@ -15,7 +15,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for p in pedidos %}
+        {% for p in pedidos: %}
         <tr>
             <td>{{ "{:06d}".format(p.id) }}</td>
             <td>{{ p.data_hora }}</td>
@@ -30,7 +30,7 @@
         {% endfor %}
     </tbody>
 </table>
-{% else %}
+{% else: %}
 <h2 class="lead">Não há pedidos em seu histórico.</h2>
 {% endif %}
 {% endblock %}

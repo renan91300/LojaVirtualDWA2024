@@ -6,13 +6,14 @@ from models.usuario_model import Usuario
 from repositories.usuario_repo import UsuarioRepo
 from util.cookies import NOME_COOKIE_AUTH, adicionar_cookie_auth
 
+
 async def obter_usuario_logado(request: Request) -> Optional[Usuario]:
     try:
         token = request.cookies[NOME_COOKIE_AUTH]
         if token.strip() == "":
             return None
-        cliente = UsuarioRepo.obter_por_token(token)
-        return cliente
+        usuario = UsuarioRepo.obter_por_token(token)
+        return usuario
     except KeyError:
         return None
 
@@ -35,9 +36,7 @@ async def checar_autorizacao(request: Request):
     area_do_admin = request.url.path.startswith("/admin")
     if (area_do_cliente or area_do_admin) and not usuario:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    if area_do_cliente and usuario.perfil != 1:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    if area_do_admin and usuario.perfil != 0:
+    if (area_do_cliente and usuario.perfil != 1) or (area_do_admin and usuario.perfil != 0):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
@@ -56,8 +55,20 @@ def conferir_senha(senha: str, hash_senha: str) -> bool:
         return False
 
 
-def criar_token(length: int = 32) -> str:
+def gerar_token(length: int = 32) -> str:
     try:
         return secrets.token_hex(length)
     except ValueError:
         return ""
+
+
+def configurar_swagger_auth(app):
+    app.openapi_schema = app.openapi()
+    app.openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    app.openapi_schema["security"] = [{"BearerAuth": []}]

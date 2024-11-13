@@ -1,9 +1,9 @@
 [
     {
         "id": 0,
-        "nome": "Admistrador Geral",
+        "nome": "Administrador Geral",
         "cpf": "000.000.000-00",
-        "data_nascimento": "1980-01-01",
+        "data_nascimento": "1900-01-01",
         "endereco": "",
         "telefone": "(00) 00000-0000",
         "email": "admin@email.com",
@@ -105,11 +105,11 @@
         "email": "juliana@email.com",
         "perfil": "1",
         "senha": "$2b$12$TJYfq2QCDwstKUtrpx6ZK.wnKS2AXPqhcKGVsffuVetYg1eUTMot2",
-        "token": "" 
+        "token": ""
     },
     {
         "id": 9,
-        "nome": "Marcos Silva", 
+        "nome": "Marcos Silva",
         "cpf": "901.234.567-89",
         "data_nascimento": "1988-09-09",
         "endereco": "Rua I, 606",

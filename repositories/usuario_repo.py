@@ -29,7 +29,7 @@ class UsuarioRepo:
                         usuario.telefone,
                         usuario.email,
                         usuario.perfil,
-                        usuario.senha
+                        usuario.senha                        
                     ),
                 )
                 if cursor.rowcount > 0:
@@ -45,6 +45,18 @@ class UsuarioRepo:
             with obter_conexao() as conexao:
                 cursor = conexao.cursor()
                 tuplas = cursor.execute(SQL_OBTER_TODOS_POR_PERFIL, (perfil,)).fetchall()
+                usuarios = [Usuario(*t) for t in tuplas]
+                return usuarios
+        except sqlite3.Error as ex:
+            print(ex)
+            return None
+        
+    @classmethod
+    def obter_todos(cls) -> List[Usuario]:
+        try:
+            with obter_conexao() as conexao:
+                cursor = conexao.cursor()
+                tuplas = cursor.execute(SQL_OBTER_TODOS).fetchall()
                 usuarios = [Usuario(*t) for t in tuplas]
                 return usuarios
         except sqlite3.Error as ex:
@@ -115,20 +127,6 @@ class UsuarioRepo:
                 for usuario in usuarios:
                     UsuarioRepo.inserir(Usuario(**usuario))
 
-    @classmethod
-    def obter_todos(cls) -> List[Usuario]:
-        try:
-            with obter_conexao() as conexao:
-                cursor = conexao.cursor()
-                tuplas = cursor.execute(
-                    SQL_OBTER_TODOS
-                ).fetchall()
-                usuarios = [Usuario(*t) for t in tuplas]
-                return usuarios
-        except sqlite3.Error as ex:
-            print(ex)
-            return None
-        
     @classmethod
     def obter_busca(cls, termo: str, pagina: int, tamanho_pagina: int) -> List[Usuario]:
         termo = "%" + termo + "%"
