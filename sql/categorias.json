@@ -1,0 +1,27 @@
+[
+    {
+        "id": 1,
+        "nome": "Eletrônicos",
+        "descricao": "Dispositivos e gadgets eletrônicos"
+    },
+    {
+        "id": 2,
+        "nome": "Roupas",
+        "descricao": "Vestuário e acessórios de moda"
+    },
+    {
+        "id": 3,
+        "nome": "Livros",
+        "descricao": "Literatura, educação e entretenimento"
+    },
+    {
+        "id": 4,
+        "nome": "Móveis",
+        "descricao": "Móveis para casa e escritório"
+    },
+    {
+        "id": 5,
+        "nome": "Alimentos",
+        "descricao": "Comidas e bebidas"
+    }
+]

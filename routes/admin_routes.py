@@ -12,6 +12,7 @@ from dtos.problem_details_dto import ProblemDetailsDto
 from models.pedido_model import EstadoPedido
 from models.produto_model import Produto
 from models.usuario_model import Usuario
+from repositories.categoria_repo import CategoriaRepo
 from repositories.item_pedido_repo import ItemPedidoRepo
 from repositories.pedido_repo import PedidoRepo
 from repositories.produto_repo import ProdutoRepo
@@ -35,10 +36,15 @@ async def inserir_produto(
     preco: float = Form(...),
     descricao: str = Form(...),
     estoque: int = Form(...),
+    id_categoria: int = Form(...),
     imagem: Optional[UploadFile] = File(None),
 ) -> Produto:
     produto_dto = InserirProdutoDto(
-        nome=nome, preco=preco, descricao=descricao, estoque=estoque
+        nome=nome,
+        preco=preco,
+        descricao=descricao,
+        estoque=estoque,
+        id_categoria=id_categoria,
     )
     conteudo_arquivo = await imagem.read()
     imagem = Image.open(BytesIO(conteudo_arquivo))
@@ -57,6 +63,7 @@ async def inserir_produto(
         produto_dto.preco,
         produto_dto.descricao,
         produto_dto.estoque,
+        produto_dto.id_categoria,
     )
     novo_produto = ProdutoRepo.inserir(novo_produto)
     if novo_produto:
@@ -94,11 +101,20 @@ async def obter_produto(id_produto: int = Path(..., title="Id do Produto", ge=1)
     return JSONResponse(pd.to_dict(), status_code=404)
 
 
+@router.get("/obter_produtos_por_categoria/{id_categoria}")
+async def obter_produtos_por_categoria(
+    id_categoria: int = Path(..., title="Id da Categoria", ge=1)
+):
+    await asyncio.sleep(SLEEP_TIME)
+    produtos = ProdutoRepo.obter_por_categoria(id_categoria)
+    return produtos
+
+
 @router.post("/alterar_produto", status_code=204)
 async def alterar_produto(inputDto: AlterarProdutoDto):
     await asyncio.sleep(SLEEP_TIME)
     produto = Produto(
-        inputDto.id, inputDto.nome, inputDto.preco, inputDto.descricao, inputDto.estoque
+        inputDto.id, inputDto.nome, inputDto.preco, inputDto.descricao, inputDto.estoque, inputDto.id_categoria
     )
     if ProdutoRepo.alterar(produto):
         return None
@@ -107,6 +123,69 @@ async def alterar_produto(inputDto: AlterarProdutoDto):
         f"O produto com id <b>{inputDto.id}</b> não foi encontrado.",
         "value_not_found",
         ["body", "id"],
+    )
+    return JSONResponse(pd.to_dict(), status_code=404)
+
+
+@router.get("/obter_categorias")
+async def obter_categorias():
+    await asyncio.sleep(SLEEP_TIME)
+    categorias = CategoriaRepo.obter_todos()
+    return categorias
+
+
+@router.get("/obter_categorias/{id_categoria}")
+async def obter_categoria(id_categoria: int = Path(..., title="Id da Categoria", ge=1)):
+    await asyncio.sleep(SLEEP_TIME)
+    categoria = CategoriaRepo.obter_um(id_categoria)
+    if categoria:
+        return categoria
+    pd = ProblemDetailsDto(
+        "int",
+        f"A categoria com id <b>{id_categoria}</b> não foi encontrada.",
+        "value_not_found",
+        ["body", "id_categoria"],
+    )
+    return JSONResponse(pd.to_dict(), status_code=404)
+
+
+@router.post("/inserir_categoria", status_code=201)
+async def inserir_categoria(nome: str = Form(...), descricao: str = Form(...)):
+    await asyncio.sleep(SLEEP_TIME)
+    nova_categoria = CategoriaRepo.inserir(nome, descricao)
+    return nova_categoria
+
+
+@router.post("/excluir_categoria", status_code=204)
+async def excluir_categoria(
+    id_categoria: int = Form(..., title="Id da Categoria", ge=1)
+):
+    await asyncio.sleep(SLEEP_TIME)
+    if CategoriaRepo.excluir(id_categoria):
+        return None
+    pd = ProblemDetailsDto(
+        "int",
+        f"A categoria com id <b>{id_categoria}</b> não foi encontrada.",
+        "value_not_found",
+        ["body", "id_categoria"],
+    )
+    return JSONResponse(pd.to_dict(), status_code=404)
+
+
+@router.post("/alterar_categoria", status_code=204)
+async def alterar_categoria(
+    id_categoria: int = Form(..., title="Id da Categoria", ge=1),
+    nome: str = Form(...),
+    descricao: str = Form(...),
+):
+    await asyncio.sleep(SLEEP_TIME)
+    if CategoriaRepo.alterar(id_categoria, nome, descricao):
+        return None
+    pd = ProblemDetailsDto(
+        "int",
+        f"A categoria com id <b>{id_categoria}</b> não foi encontrada.",
+        "value_not_found",
+        ["body", "id_categoria"],
     )
     return JSONResponse(pd.to_dict(), status_code=404)
 

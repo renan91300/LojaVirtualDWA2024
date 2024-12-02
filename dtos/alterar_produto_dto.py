@@ -9,10 +9,17 @@ class AlterarProdutoDto(BaseModel):
     preco: float    
     descricao: str
     estoque: int
+    id_categoria: int
 
     @field_validator("id")
     def validar_id(cls, v):
         msg = is_greater_than(v, "Id", 0)
+        if msg: raise ValueError(msg)
+        return v
+    
+    @field_validator("id_categoria")
+    def validar_id_categoria(cls, v):
+        msg = is_greater_than(v, "Id da Categoria", 0)
         if msg: raise ValueError(msg)
         return v
 
