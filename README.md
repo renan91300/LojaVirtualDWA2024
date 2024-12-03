@@ -1,8 +1,9 @@
 # Loja Virtual
 
-(22 de outubro de 2024)
-
 Loja virtual desenvolvida durante a disciplina de Desenvolvimento Web Avançado no Ifes Cachoeiro.
+
+## Grupo
+Gabriely Carrari, Renan Poggian e Vitor Miller
 
 ## Como Usar Este Projeto
 
