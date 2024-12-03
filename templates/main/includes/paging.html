@@ -31,6 +31,21 @@
                 <option value="2" {{ 'selected' if ordem == 2 else '' }}>Menor Preço</option>
                 <option value="3" {{ 'selected' if ordem == 3 else '' }}>Maior Preço</option>
             </select>
+            <input type="hidden" name="c" value="{{ categoria_selecionada }}">    
+        </form>
+    </div>
+    <div class="ms-auto">
+        <form action="/buscar_por_categoria" method="get">
+            <input type="hidden" name="p" value="{{ pagina_atual }}">
+            <input type="hidden" name="tp" value="{{ tamanho_pagina }}">
+            <input type="hidden" name="q" value="{{ termo_busca }}">            
+            <input type="hidden" name="o" value="{{ ordem }}">
+            <select name="c" class="form-control" onchange="this.form.submit()">
+                <option value="0">Filtrar por categoria</option>
+                {% for categoria in categorias %}   
+                    <option value="{{ categoria.id }}" {{ 'selected' if categoria.id == categoria_selecionada else '' }}>{{ categoria.nome }}</option>
+                {% endfor %}
+            </select>
         </form>
     </div>
 </div>

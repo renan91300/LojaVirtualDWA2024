@@ -1,8 +1,9 @@
 import math
 from fastapi import APIRouter, HTTPException, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from dtos.entrar_dto import EntrarDto
+from repositories.categoria_repo import CategoriaRepo
 from util.html import ler_html
 from dtos.inserir_usuario_dto import InserirUsuarioDTO
 from models.usuario_model import Usuario
@@ -143,6 +144,7 @@ async def get_buscar(
     produtos = ProdutoRepo.obter_busca(q, p, tp, o)
     qtde_produtos = ProdutoRepo.obter_quantidade_busca(q)
     qtde_paginas = math.ceil(qtde_produtos / float(tp))
+    categorias = CategoriaRepo.obter_todos()
     return templates.TemplateResponse(
         "pages/buscar.html",
         {
@@ -153,5 +155,38 @@ async def get_buscar(
             "pagina_atual": p,
             "termo_busca": q,
             "ordem": o,
+            "categorias": categorias,
+            
+        },
+    )
+
+@router.get("/buscar_por_categoria")
+async def buscar_por_categoria(
+    request: Request,
+    q: str,
+    p: int = 1,
+    tp: int = 6,
+    o: int = 1,
+    c: int = 0,
+):   
+    if c == 0:
+        return RedirectResponse(url=f"/buscar?q={q}&p={p}&tp={tp}&o={o}")
+     
+    produtos = ProdutoRepo.obter_busca_por_categoria(q, p, tp, o, c)
+    qtde_produtos = ProdutoRepo.obter_quantidade_busca_categoria(q, c)
+    qtde_paginas = math.ceil(qtde_produtos / float(tp))
+    categorias = CategoriaRepo.obter_todos()
+    return templates.TemplateResponse(
+        "pages/buscar.html",
+        {
+            "request": request,
+            "produtos": produtos,
+            "quantidade_paginas": qtde_paginas,
+            "tamanho_pagina": tp,
+            "pagina_atual": p,
+            "termo_busca": q,
+            "ordem": o,
+            "categorias": categorias,
+            "categoria_selecionada": c,
         },
     )
