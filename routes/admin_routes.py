@@ -5,10 +5,12 @@ from fastapi import APIRouter, File, Form, Path, UploadFile
 from fastapi.responses import JSONResponse
 from PIL import Image
 
+from dtos.alterar_categoria_dto import AlterarCategoriaDto
 from dtos.alterar_pedido_dto import AlterarPedidoDto
 from dtos.alterar_produto_dto import AlterarProdutoDto
 from dtos.inserir_produto_dto import InserirProdutoDto
 from dtos.problem_details_dto import ProblemDetailsDto
+from models.categoria_model import Categoria
 from models.pedido_model import EstadoPedido
 from models.produto_model import Produto
 from models.usuario_model import Usuario
@@ -46,16 +48,17 @@ async def inserir_produto(
         estoque=estoque,
         id_categoria=id_categoria,
     )
-    conteudo_arquivo = await imagem.read()
-    imagem = Image.open(BytesIO(conteudo_arquivo))
-    if not imagem:
-        pd = ProblemDetailsDto(
-            "file",
-            "O arquivo enviado não é uma imagem válida.",
-            "invalid_image",
-            ["body", "imagem"],
-        )
-        return JSONResponse(pd.to_dict(), status_code=422)
+    if imagem:
+        conteudo_arquivo = await imagem.read()
+        imagem = Image.open(BytesIO(conteudo_arquivo))
+        if not imagem:
+            pd = ProblemDetailsDto(
+                "file",
+                "O arquivo enviado não é uma imagem válida.",
+                "invalid_image",
+                ["body", "imagem"],
+            )
+            return JSONResponse(pd.to_dict(), status_code=422)
     await asyncio.sleep(SLEEP_TIME)
     novo_produto = Produto(
         None,
@@ -66,7 +69,7 @@ async def inserir_produto(
         produto_dto.id_categoria,
     )
     novo_produto = ProdutoRepo.inserir(novo_produto)
-    if novo_produto:
+    if novo_produto and imagem:
         imagem_quadrada = transformar_em_quadrada(imagem)
         imagem_quadrada.save(f"static/img/produtos/{novo_produto.id:04d}.jpg", "JPEG")
     return novo_produto
@@ -152,9 +155,13 @@ async def obter_categoria(id_categoria: int = Path(..., title="Id da Categoria",
 @router.post("/inserir_categoria", status_code=201)
 async def inserir_categoria(nome: str = Form(...), descricao: str = Form(...)):
     await asyncio.sleep(SLEEP_TIME)
-    nova_categoria = CategoriaRepo.inserir(nome, descricao)
+    nova_categoria = Categoria(
+        None,
+        nome,
+        descricao,
+    )
+    nova_categoria = CategoriaRepo.inserir(nova_categoria)
     return nova_categoria
-
 
 @router.post("/excluir_categoria", status_code=204)
 async def excluir_categoria(
@@ -173,21 +180,20 @@ async def excluir_categoria(
 
 
 @router.post("/alterar_categoria", status_code=204)
-async def alterar_categoria(
-    id_categoria: int = Form(..., title="Id da Categoria", ge=1),
-    nome: str = Form(...),
-    descricao: str = Form(...),
-):
+async def alterar_categoria(inputDto: AlterarCategoriaDto
+):  
+    categoria_alterada = Categoria(
+        inputDto.id, inputDto.nome,  inputDto.descricao
+    )
     await asyncio.sleep(SLEEP_TIME)
-    if CategoriaRepo.alterar(id_categoria, nome, descricao):
+    if CategoriaRepo.alterar(categoria_alterada):
         return None
     pd = ProblemDetailsDto(
         "int",
-        f"A categoria com id <b>{id_categoria}</b> não foi encontrada.",
+        f"A categoria com id <b>{inputDto.id}</b> não foi encontrada.",
         "value_not_found",
         ["body", "id_categoria"],
     )
-    return JSONResponse(pd.to_dict(), status_code=404)
 
 
 @router.post("/alterar_pedido", status_code=204)
